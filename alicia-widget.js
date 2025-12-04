@@ -1,117 +1,152 @@
-/* --- WIDGET ALICIA versión completa --- */
-document.addEventListener("DOMContentLoaded", () => {
+// Crear el contenedor flotante
+const widgetContainer = document.createElement("div");
+widgetContainer.id = "alicia-widget-container";
+widgetContainer.innerHTML = `
+  <div id="alicia-bubble">
+    <img src="https://cdn-icons-png.flaticon.com/512/4712/4712100.png" width="32" />
+  </div>
 
-  const webhook = "https://n8n.thecrewsia.com/webhook/2ca2c7bd-cc2c-4df1-9c59-daf12bf4dc03/chat";
+  <div id="alicia-window" class="hidden">
+    <div id="alicia-header">Alicia – Agente IA</div>
+    <div id="alicia-messages"></div>
 
-  // Crear botón flotante
-  const btn = document.createElement("div");
-  btn.style.position = "fixed";
-  btn.style.bottom = "20px";
-  btn.style.right = "20px";
-  btn.style.width = "62px";
-  btn.style.height = "62px";
-  btn.style.borderRadius = "50%";
-  btn.style.background = "#000";
-  btn.style.display = "flex";
-  btn.style.alignItems = "center";
-  btn.style.justifyContent = "center";
-  btn.style.cursor = "pointer";
-  btn.style.zIndex = "999999";
-
-  btn.innerHTML = `
-    <img src="https://cdn-icons-png.flaticon.com/512/1084/1084658.png"
-         style="width:40px;height:40px;border-radius:50%">
-  `;
-
-  document.body.appendChild(btn);
-
-  // Crear panel de chat
-  const panel = document.createElement("div");
-  panel.style.position = "fixed";
-  panel.style.bottom = "100px";
-  panel.style.right = "20px";
-  panel.style.width = "330px";
-  panel.style.height = "470px";
-  panel.style.borderRadius = "14px";
-  panel.style.background = "#fff";
-  panel.style.boxShadow = "0 4px 20px rgba(0,0,0,0.2)";
-  panel.style.display = "none";
-  panel.style.flexDirection = "column";
-  panel.style.overflow = "hidden";
-  panel.style.zIndex = "999999";
-
-  panel.innerHTML = `
-    <div style="background:#000;color:#fff;padding:12px;font-size:16px;font-weight:bold">
-      Chat con Alicia
+    <div id="alicia-input-area">
+      <input id="alicia-input" placeholder="Escribe aquí..." />
+      <button id="alicia-send">➤</button>
     </div>
-    <div id="aliciaMessages" style="flex:1;padding:12px;overflow-y:auto;font-size:14px;color:#333"></div>
-    <div style="padding:10px;display:flex;gap:6px;border-top:1px solid #ddd">
-      <input id="aliciaInput" type="text" placeholder="Escribe aquí..."
-        style="flex:1;padding:8px;border:1px solid #ccc;border-radius:8px">
-      <button id="aliciaSend"
-        style="background:#000;color:#fff;padding:8px 14px;border-radius:8px;border:none;cursor:pointer">
-        ➤
-      </button>
-    </div>
-  `;
+  </div>
+`;
+document.body.appendChild(widgetContainer);
 
-  document.body.appendChild(panel);
-
-  // Abrir / cerrar
-  btn.onclick = () => {
-    panel.style.display = panel.style.display === "none" ? "flex" : "none";
-
-    // Mensaje inicial
-    if (!panel.dataset.loaded) {
-      panel.dataset.loaded = "true";
-      addMessage("Alicia", "Hola 👋 Soy Alicia. ¿Quieres saber más acerca de los agentes de texto?");
-    }
-  };
-
-  // Añadir mensaje al panel
-  function addMessage(from, text) {
-    const box = document.getElementById("aliciaMessages");
-    const bubble = document.createElement("div");
-    bubble.style.margin = "8px 0";
-    bubble.style.padding = "8px 10px";
-    bubble.style.borderRadius = "10px";
-    bubble.style.maxWidth = "80%";
-
-    if (from === "Alicia") {
-      bubble.style.background = "#f1f1f1";
-      bubble.style.alignSelf = "flex-start";
-    } else {
-      bubble.style.background = "#000";
-      bubble.style.color = "#fff";
-      bubble.style.alignSelf = "flex-end";
-    }
-
-    bubble.textContent = text;
-    box.appendChild(bubble);
-    box.scrollTop = box.scrollHeight;
+// Estilos del widget
+const style = document.createElement("style");
+style.textContent = `
+  #alicia-widget-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999999;
+    font-family: Arial, sans-serif;
   }
 
-  // Enviar
-  document.getElementById("aliciaSend").onclick = sendMsg;
+  /* Burbuja negra como estaba antes */
+  #alicia-bubble {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: #000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  }
+  #alicia-bubble img {
+    width: 32px;
+    height: 32px;
+  }
 
-  function sendMsg() {
-    const input = document.getElementById("aliciaInput");
-    const msg = input.value.trim();
-    if (!msg) return;
+  /* Ventana del chat */
+  #alicia-window {
+    width: 330px;
+    height: 450px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+  .hidden { display: none; }
 
-    addMessage("Yo", msg);
-    input.value = "";
+  /* Cabecera negra */
+  #alicia-header {
+    background: #000000;
+    color: white;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 14px 14px 0 0;
+  }
 
-    fetch(webhook, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chatInput: msg })
+  #alicia-messages {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+  }
+
+  .msg {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #e8e8e8;
+    border-radius: 8px;
+    max-width: 85%;
+  }
+
+  .me {
+    background: #ffe27c; /* amarillo suave similar al botón */
+    margin-left: auto;
+  }
+
+  #alicia-input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+  }
+
+  #alicia-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
+  #alicia-send {
+    margin-left: 6px;
+    padding: 8px 12px;
+    background: #000000;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+`;
+document.head.appendChild(style);
+
+// Alternar ventana del chat
+document.getElementById("alicia-bubble").onclick = () => {
+  document.getElementById("alicia-window").classList.toggle("hidden");
+};
+
+// Función para agregar mensajes
+function addMessage(sender, text) {
+  const box = document.getElementById("alicia-messages");
+  const div = document.createElement("div");
+
+  div.className = "msg " + (sender === "Yo" ? "me" : "");
+  div.textContent = text;
+
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+// Enviar mensaje al webhook
+document.getElementById("alicia-send").onclick = () => {
+  const input = document.getElementById("alicia-input");
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  addMessage("Yo", msg);
+  input.value = "";
+
+  fetch("https://n8n.thecrewsia.com/webhook/2ca2c7bd-cc2c-4df1-9c59-daf12bf4dc03/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chatInput: msg })
+  })
+    .then(r => r.json())
+    .then(data => {
+      addMessage("Alicia", data.reply || "No entendí 🤖");
     })
-      .then(res => res.json())
-      .then(data => {
-        const reply = data.reply || data.text || "No entendí eso 🤖";
-        addMessage("Alicia", reply);
-      })
-      .catch(() => addMessage("Alicia", "Error de conexión 😔"));
-  }
-});
+    .catch(() => addMessage("Alicia", "Hubo un error al conectar con el servidor 😕"));
+};
