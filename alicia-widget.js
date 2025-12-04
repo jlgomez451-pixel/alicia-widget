@@ -1,84 +1,165 @@
 (function () {
+    // Crear contenedor del widget
     const widgetContainer = document.createElement("div");
     widgetContainer.id = "alicia-widget-container";
 
-    widgetContainer.style.position = "fixed";
-    widgetContainer.style.bottom = "20px";
-    widgetContainer.style.right = "20px";
-    widgetContainer.style.width = "340px";
-    widgetContainer.style.height = "500px";
-    widgetContainer.style.background = "#fff";
-    widgetContainer.style.borderRadius = "12px";
-    widgetContainer.style.boxShadow = "0 4px 25px rgba(0,0,0,0.25)";
-    widgetContainer.style.zIndex = "999999";
-    widgetContainer.style.display = "flex";
-    widgetContainer.style.flexDirection = "column";
-    widgetContainer.style.overflow = "hidden";
-
-    document.body.appendChild(widgetContainer);
-
     widgetContainer.innerHTML = `
-        <div style="background:black;color:white;padding:10px;font-size:16px;text-align:center;font-weight:bold">
-            Alicia – Asistente IA
-        </div>
+        <style>
+            #alicia-widget-container {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 999999;
+                font-family: Arial, sans-serif;
+            }
 
-        <div id="alicia-chat-box"
-            style="flex:1;padding:10px;overflow-y:auto;background:white;font-size:14px;">
-            <div style="background:black;color:white;padding:8px;border-radius:8px;margin-bottom:10px;">
-                Hola 👋 Soy Alicia. ¿Quieres saber más acerca de los agentes de texto?
+            #alicia-widget {
+                width: 360px;
+                height: 420px;
+                background: #ffffff;
+                border-radius: 15px;
+                box-shadow: 0 0 20px rgba(0,0,0,0.25);
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            #alicia-header {
+                background: #000;
+                color: white;
+                padding: 12px;
+                font-weight: bold;
+                text-align: center;
+                font-size: 16px;
+            }
+
+            #alicia-messages {
+                flex: 1;
+                padding: 12px;
+                overflow-y: auto;
+                background: #f5f5f5;
+            }
+
+            .alicia-msg {
+                background: #000000;
+                color: #ffffff;
+                padding: 8px 12px;
+                border-radius: 10px;
+                margin-bottom: 10px;
+                display: inline-block;
+                max-width: 85%;
+                font-size: 14px;
+            }
+
+            #alicia-input-area {
+                padding: 10px;
+                background: #ffffff;
+                display: flex;
+                border-top: 1px solid #ddd;
+            }
+
+            #alicia-input {
+                flex: 1;
+                padding: 10px;
+                border-radius: 10px;
+                border: 1px solid #ccc;
+                outline: none;
+            }
+
+            #alicia-send {
+                width: 45px;
+                height: 45px;
+                background: black;
+                color: white;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                border-radius: 10px;
+                margin-left: 8px;
+                cursor: pointer;
+            }
+
+            /* Botón flotante */
+            #alicia-open-btn {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: #000000;
+                color: white;
+                font-size: 30px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: pointer;
+                z-index: 999999;
+                box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            }
+
+            #alicia-widget { display: none; }
+        </style>
+
+        <div id="alicia-open-btn">💬</div>
+
+        <div id="alicia-widget">
+            <div id="alicia-header">Alicia – Asistente IA</div>
+            <div id="alicia-messages">
+                <div class="alicia-msg">Hola 👋 Soy Alicia. ¿Quieres saber más acerca de los agentes de texto?</div>
             </div>
-        </div>
 
-        <div style="padding:10px;background:#f1f1f1;display:flex;">
-            <input id="alicia-input" type="text"
-                placeholder="Escribe aquí..."
-                style="flex:1;border-radius:8px;border:1px solid #ccc;padding:8px;">
-            <button id="alicia-send"
-                style="margin-left:10px;background:black;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;">
-                ➤
-            </button>
+            <div id="alicia-input-area">
+                <input id="alicia-input" type="text" placeholder="Escribe aquí..." />
+                <div id="alicia-send">➤</div>
+            </div>
         </div>
     `;
 
-    const sendButton = document.getElementById("alicia-send");
+    document.body.appendChild(widgetContainer);
+
+    // Abrir/Cerrar widget
+    const widget = document.getElementById("alicia-widget");
+    const btn = document.getElementById("alicia-open-btn");
+
+    btn.onclick = () => {
+        widget.style.display = widget.style.display === "none" ? "flex" : "none";
+    };
+
+    // Enviar mensajes a n8n
+    const sendBtn = document.getElementById("alicia-send");
     const input = document.getElementById("alicia-input");
-    const chatBox = document.getElementById("alicia-chat-box");
+    const msgContainer = document.getElementById("alicia-messages");
 
     function sendMessage() {
         const text = input.value.trim();
-        if (text === "") return;
+        if (!text) return;
 
+        // Mostrar mensaje del usuario
         const userMsg = document.createElement("div");
-        userMsg.style.cssText = "padding:6px 8px;margin:8px 0;background:#eaeaea;border-radius:6px;";
+        userMsg.className = "alicia-msg";
+        userMsg.style.background = "#333";
         userMsg.textContent = text;
-        chatBox.appendChild(userMsg);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        msgContainer.appendChild(userMsg);
 
         input.value = "";
 
-        // Enviar a n8n
+        // Enviar a webhook
         fetch("https://n8n.thecrewsia.com/webhook/2ca2c7bd-cc2c-4df1-9c59-daf12bf4dc03/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message: text })
         })
-        .then(res => res.json())
-        .then(data => {
-            const botMsg = document.createElement("div");
-            botMsg.style.cssText = "padding:6px 8px;margin:8px 0;background:black;color:white;border-radius:6px;";
-            botMsg.textContent = data.reply || "Alicia está respondiendo...";
-            chatBox.appendChild(botMsg);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        })
-        .catch(() => {
-            const botMsg = document.createElement("div");
-            botMsg.style.cssText = "padding:6px 8px;margin:8px 0;background:red;color:white;border-radius:6px;";
-            botMsg.textContent = "Error al conectar con el servidor.";
-            chatBox.appendChild(botMsg);
-        });
+            .then((res) => res.json())
+            .then((data) => {
+                const botMsg = document.createElement("div");
+                botMsg.className = "alicia-msg";
+                botMsg.textContent = data.reply || "Gracias por tu mensaje.";
+                msgContainer.appendChild(botMsg);
+            });
     }
 
-    sendButton.onclick = sendMessage;
+    sendBtn.onclick = sendMessage;
     input.addEventListener("keypress", (e) => {
         if (e.key === "Enter") sendMessage();
     });
